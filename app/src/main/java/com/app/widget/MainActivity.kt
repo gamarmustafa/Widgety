@@ -1,7 +1,6 @@
 package com.app.widget
 
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -9,13 +8,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.app.widget.ui.theme.WidgetyTheme
 import java.time.LocalDateTime
@@ -23,7 +20,6 @@ import java.util.Calendar
 import android.app.DatePickerDialog
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -41,10 +37,13 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             WidgetyTheme {
-                DatePickerContent()
+                DatePickerContent{
+
+                }
             }
         }
     }
+
 }
 
 
@@ -81,19 +80,18 @@ fun DatePickerDialog(onDateSelected: (LocalDateTime) -> Unit) {
 }
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun DatePickerContent() {
+fun DatePickerContent(finishActivity:() ->Unit) {
     val context = LocalContext.current
     var date by remember { mutableStateOf(LocalDateTime.now()) }
 
     Column {
         DatePickerDialog(onDateSelected = { selectedDate ->
             date = selectedDate
-            val intent = Intent(context, MyReceiver::class.java)
+            val intent = Intent(context, WidgetReceiver::class.java)
             intent.action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-            val ids = AppWidgetManager.getInstance(context).getAppWidgetIds(ComponentName(context, AppWidget::class.java))
-            intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
             intent.putExtra("target_date", date.toString())
             context.sendBroadcast(intent)
+            finishActivity()
         })
 
 //            val sharedPreferences = context.getSharedPreferences("countdown_prefs", Context.MODE_PRIVATE)
@@ -104,5 +102,6 @@ fun DatePickerContent() {
             // Update the widget
 
     }
-}
 
+
+}

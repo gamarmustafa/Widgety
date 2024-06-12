@@ -1,10 +1,9 @@
 package com.app.widget.ui
 
 import android.content.Context
-import android.os.Build
-import androidx.annotation.RequiresApi
-import androidx.compose.runtime.Composable
+import android.util.Log
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -13,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
@@ -24,49 +24,54 @@ import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.padding
-import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import java.text.SimpleDateFormat
-import java.time.Clock
-import java.time.Duration
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import java.util.Calendar
 import java.util.Locale
+
+val Context.widgetStore by preferencesDataStore(name = "widget_data_store")
+val dateKey = stringPreferencesKey("target_date")
 
 class AppWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
 
+        val store = context.widgetStore
+        val initial = store.data.first()
         provideContent {
-            val prefs = currentState<Preferences>()
-            val date = prefs[stringPreferencesKey("target_date")].orEmpty()
-            var remainingTime by remember { mutableStateOf(calculateRemainingTime(date)) }
+
+            val data by store.data.collectAsState(initial = initial)
+            val newDate = data[dateKey].orEmpty()
+
+            var remainingTime by remember { mutableStateOf(calculateRemainingTime(newDate)) }
+
+
+            Log.e("zzzDate", newDate)
+
 
             LaunchedEffect(Unit) {
                 while (true) {
-                    remainingTime = calculateRemainingTime(date)
+                    remainingTime = calculateRemainingTime(newDate)
                     delay(1000)
                 }
             }
-
-
             Box(
                 modifier = GlanceModifier.fillMaxSize()
-                    .background(GlanceTheme.colors.widgetBackground).padding(horizontal = 10.dp),
+                    .background(GlanceTheme.colors.widgetBackground).padding(12.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "${remainingTime.days} days \n${remainingTime.hours} hours \n${remainingTime.minutes} minutes\n${remainingTime. seconds} seconds remaining",
-                    style = TextStyle(fontSize = 24.sp, color = GlanceTheme.colors.onSurface
-                ))
-
+                    Text(
+                        text = "${remainingTime.days} days \n${remainingTime.hours} hours \n${remainingTime.minutes} minutes\n${remainingTime.seconds} seconds remaining",
+                        style = TextStyle(
+                            fontSize = 24.sp, color = GlanceTheme.colors.onSurface
+                        )
+                    )
             }
         }
-
-
     }
 
 
@@ -81,37 +86,10 @@ class AppWidget : GlanceAppWidget() {
         val hours = difference / (1000 * 60 * 60) % 24
         val days = difference / (1000 * 60 * 60 * 24)
 
-        return TimeRemaining(days, hours, minutes,seconds)
+        return TimeRemaining(days, hours, minutes, seconds)
     }
 
-    data class TimeRemaining(val days: Long, val hours: Long, val minutes: Long,val seconds: Long)
-
-
-
-
-
-
-
-
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    @Composable
-    fun CountdownWidget(date: String) {
-        val currentDateTime = LocalDateTime.now()
-        val targetDateTime = LocalDateTime.parse(date, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-        val duration = Duration.between(currentDateTime, targetDateTime)
-        val days = duration.toDays()
-        val hours = duration.toHours() % 24
-        val minutes = duration.toMinutes() % 60
-
-        Text(
-            text = "Countdown: $days days, $hours hours, $minutes minutes",
-            style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Bold)
-        )
-    }
-
-
-
+    data class TimeRemaining(val days: Long, val hours: Long, val minutes: Long, val seconds: Long)
 
 }
 
