@@ -29,17 +29,24 @@ class WidgetReceiver : GlanceAppWidgetReceiver() {
     ) {
         super.onUpdate(context, appWidgetManager, appWidgetIds)
         Toast.makeText(context, "onUpdate", Toast.LENGTH_SHORT).show()
+        Log.e("ZZupdate", "onupdate")
     }
 
-    override fun onReceive(context: Context, intent: Intent) {
-        super.onReceive(context, intent)
-        val date = intent.getStringExtra("target_date").orEmpty()
-        Toast.makeText(context, "Date: $date", Toast.LENGTH_SHORT).show()
-        GlobalScope.launch {
-            context.widgetStore.updateData {
-                it.toMutablePreferences().apply { set(dateKey, date) }
-            }
-            glanceAppWidget.updateAll(context)
-        }
-    }
+//    override fun onReceive(context: Context, intent: Intent) {
+//        super.onReceive(context, intent)
+//        val date = intent.getStringExtra("target_date").orEmpty()
+//        Toast.makeText(context, "Date: $date", Toast.LENGTH_SHORT).show()
+//        GlobalScope.launch {
+//
+//            GlanceAppWidgetManager(context).getGlanceIds(AppWidget::class.java).forEach {
+//                updateAppWidgetState(context, it) {
+//                    it.toMutablePreferences().apply { set(dateKey, date) }
+//                }
+//            }
+//            context.widgetStore.updateData {
+//                it.toMutablePreferences().apply { set(dateKey, date) }
+//            }
+//            glanceAppWidget.updateAll(context)
+//        }
+//    }
 }
